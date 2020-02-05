@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Docker4Drupal est un ensemble d'images de docker optimisé pour Drupal. Utilisez le fichier `docker-compose.yml` de la [dernière version stable](https://github.com/wodby/docker4drupal/releases) pour faire tourner l'environnement local sous Linux, Mac OS X et Windows. Une version de ce projet existe, si vous souhaitez y accéder [**cliquer ici**](https://github.com/Enzo-JURET/docker4drupal_D7-FR)
+Docker4Drupal est un ensemble d'images de docker optimisé pour Drupal. Utilisez le fichier `docker-compose.yml` de la [dernière version stable](https://github.com/wodby/docker4drupal/releases) pour faire tourner l'environnement local sous Linux, Mac OS X et Windows. Une version complète de ce projet existe, si vous souhaitez y accéder [**cliquer ici**](https://github.com/Enzo-JURET/docker4drupal_D7-FR)
 
 * Lire la documentation sur [**comment utiliser**](https://wodby.com/docs/stacks/drupal/local#usage)
 * Rejoignez notre communauté sur [Spectrum](https://spectrum.chat/wodby/drupal) et posez des questions sur le canal `#Drupal`.
