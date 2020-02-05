@@ -1,0 +1,98 @@
+version: "3"
+
+services:
+
+#######################################################################################################
+# Nom de la section du conteneur mariadb (Il permet entre autre de définir un espace du code)
+  mariadb:
+    # Image mariadb provenant de Docker Hub (Indéxé de la version de mariadb choisi dans le fichier .env)
+    image: wodby/mariadb:$MARIADB_TAG
+    # Nom du conteneur (Préfixé du nom de votre projet se trouvant dans le fichier .env)
+    container_name: "${PROJECT_NAME}_mariadb"
+    # Définit le délai d'attente avant de forcer la destruction manuelle du conteneur mariadb
+    stop_grace_period: 30s
+    # Permet de définir les variables d'environnements de mariadb
+    environment:
+      # Définit le mot de passe root de MySQL
+      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      # Définit le nom de la base de données MySQL
+      MYSQL_DATABASE: $DB_NAME
+      # Définit le nom de l'utilisateur de la base MySQL
+      MYSQL_USER: $DB_USER
+      # Définit le mot de passe de l'utilosateur de la base MYSQL
+      MYSQL_PASSWORD: $DB_PASSWORD
+ # Cette partie volume de mariadb, vous permet d'initialiser votre base de données depuis un fichier .sql
+ #   volumes:
+ #     - ./mariadb-init:/docker-entrypoint-initdb.d # Placer votre fichier d'initialsation .sql à cette adresse.
+
+#######################################################################################################
+  # Nom de la section du conteneur php
+  php:
+    # Image PHP provenant de Docker Hub (Indéxé de la version de php choisi dans le fichier .env)
+    image: wodby/drupal-php:$PHP_TAG
+    # Nom du conteneur (Préfixé du nom de votre projet se trouvant dans le fichier .env)
+    container_name: "${PROJECT_NAME}_php"
+    # Permet de définir les variables d'environnements
+    environment:
+      # Définit l'hôte de la Base de données  
+      DB_HOST: $DB_HOST
+      # Définit le port de la Base de données
+      DB_PORT: $DB_PORT
+      # Définit le nom de l'utilisateur de la base MySQL
+      DB_USER: $DB_USER
+      # Définit le mot de passe de l'utilisateur de la base MySQL
+      DB_PASSWORD: $DB_PASSWORD
+      # Définit le nom de la base MySQL
+      DB_NAME: $DB_NAME
+      # Définit le pilote de la base de données (dans notre cas nous utilisons une base mariadb donc -> MySQL)
+      DB_DRIVER: $DB_DRIVER
+      # Ces deux variables représentes les paramètre du FastCGI Process Manager (appelé également 'FPM')
+      PHP_FPM_USER: wodby
+      PHP_FPM_GROUP: wodby
+      COLUMNS: 80
+    # Définit la chemin ou se trouve votre projet Drupal, afin que php connaissent l'emplacement où il doit agir
+    volumes:
+      - ./:/var/www/html
+
+#######################################################################################################
+  # Nom de la section du conteneur apache
+  apache:
+    # Image apache provenant de Docker Hub (Indéxé de la version de apache choisi dans le fichier .env)
+    image: wodby/apache:$APACHE_TAG
+    # Nom du conteneur (Préfixé du nom de votre projet se trouvant dans le fichier .env)
+    container_name: "${PROJECT_NAME}_apache"
+    # Permet de définir les dépendances d'apache aux autres conteneurs
+    depends_on:
+      - php
+    # Permet de définir les variables d'environnements
+    environment:
+      # Définit le niveau de complexité des informations rentrant dans le fichier de logs de apache
+      APACHE_LOG_LEVEL: debug
+      # Définit un hôte prédéfini par défaut
+      APACHE_BACKEND_HOST: php
+      # Définit la configuration prédéfinit du vhôte d'apache
+      APACHE_VHOST_PRESET: php
+      # Définit l'emplacement root de apache
+      APACHE_DOCUMENT_ROOT: /var/www/html
+    # Définit la chemin ou se trouve votre projet Drupal, afin que apache connaissent l'emplacement où il doit agir
+    volumes:
+      - ./:/var/www/html
+    labels:
+      - "traefik.http.routers.${PROJECT_NAME}_apache.rule=Host(`${PROJECT_BASE_URL}`)"
+
+#######################################################################################################
+  # Nom de la section du conteneur traefik
+  traefik:
+    # Image traefik venant de Docker Hub
+    image: traefik:v2.0
+    # Nom du conteneur (Préfixé du nom de votre projet se trouvant dans le fichier .env)
+    container_name: "${PROJECT_NAME}_traefik"
+    # Commande exécuté lors de la création du serveur Docker (après exécution de la commande : docker-compose up -d)
+    command: --api.insecure=true --providers.docker
+    # Définit le port d'accès au stack Docker comprenant tous les composants de notre serveur web 
+    ports:
+      - '[PORT_DISPONIBLE]:80'
+#      - '8080:8080' # Dashboard
+    # Définit la chemin ou se trouve votre le fichier de prépogrammation algorithmique .sock de Docker, afin que Traefik connaissent l'emplacement sur lequel il doit agir
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
